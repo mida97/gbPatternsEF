@@ -1,4 +1,4 @@
-import time
+from datetime import datetime
 
 
 def auth_front(request):
@@ -8,7 +8,7 @@ def auth_front(request):
 
 
 def time_front(request):
-    request['request_time'] = time.time()
+    request['date'] = str(datetime.today()).split()[0]
 
 
 fronts = [auth_front, time_front]

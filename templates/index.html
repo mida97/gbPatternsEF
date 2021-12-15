@@ -1,13 +1,13 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
-    <h1>Menu</h1>
-        {% for url in object_list %}
-            <li><a href="{{url.url}}">{{url.name}}</a></li>
-        {% endfor %}
-</body>
-</html>
+{% extends "base.html" %}
+{% block title %}
+	Обучение Футурологии
+{% endblock %}
+{% block style %}
+	{% include "style.html" %}
+{% endblock %}
+{% block menu %}
+	{% include "index-menu.html" %}
+{% endblock %}
+{% block body %}
+	{% include "inc-index-body.html" %}
+{% endblock %}

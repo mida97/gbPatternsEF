@@ -1,0 +1,8 @@
+# установка сервера uwsgi
+pip install uwsgi
+# установка шаблонизатора 
+pip install jinja2
+
+#Запуск сервера и приложения:
+#Скопировать папку приложения gbPatternsEF на сервер. Запустить из папки gbPatternsEF:
+uwsgi --http :8000 --wsgi-file launcher.py

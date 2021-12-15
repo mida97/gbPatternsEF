@@ -2,7 +2,6 @@ from custom_app.views import *
 
 urls = {
     '/': index_view,
-    '/admin/': AdminView(),
-    '/books/': Books(),
+    '/another_page/': another_page,
     '/contactus/': ContactUs(),
 }
