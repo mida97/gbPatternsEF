@@ -6,7 +6,7 @@ from framework.requests import Get, Post
 
 
 def not_found_404_view(request):
-    print(request)
+
     return '404 WHAT', [b'404 PAGE Not Found']
 
 
@@ -34,6 +34,7 @@ class Application:
 
         method = environ['REQUEST_METHOD']
         request['method'] = method
+        request['path'] = path
 
         if method == 'GET':
             request_params = Get().get_request_params(environ)
@@ -61,3 +62,5 @@ class Application:
         return body
 
 application = Application(urls, fronts)
+
+

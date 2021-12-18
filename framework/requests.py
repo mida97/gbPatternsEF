@@ -33,7 +33,7 @@ class Post:
         result = {}
         data = b''
         content_length = env.get('CONTENT_LENGTH')
-        print(content_length)
+        #print(content_length)
         #читаем данные, полученные от wsgi
         if content_length:
             data = env['wsgi.input'].read(int(content_length))
