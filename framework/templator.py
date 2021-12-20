@@ -17,4 +17,4 @@ def render(template_name, folder='templates', **kwargs):
     # находим шаблон в окружении
     template = env.get_template(template_name)
 
-    return template.render(**kwargs).encode('utf-8')
+    return template.render(**kwargs)

@@ -3,27 +3,30 @@
 Список курсов
 {% endblock %}
 {% block style %}
-	{% include "inc-style.html" %}
+	{% include "style.html" %}
 {% endblock %}
 {% block menu %}
-	{% include "inc-menu.html" %}
+	{% include "menu.html" %}
 {% endblock %}
 {% block body %}
+<div id="site_content">
     <div>
-        <a href="/">назад на главную</a>
-    </div>
+        <a href="/category-list/">Вернуться в Список категорий</a>
 
-    <br>
-    <br>
-
-    <div>
-        <a href="/create-course/?id={{id}}">Создать новый курс</a>
         <br>
-        <h1>Список курсов для категории "{{name}}"</h1>
+        {% if id is defined %}
+        <h1>Список курсов для категории "{{category.name}}"</h1>
+        {% else %}
+        <h1>Список курсов</h1>
+        {% endif %}
         {% for item in objects_list %}
         <li>
-            {{item.name}} <span><a href="/copy-course/?name={{item.name}}">скопировать</a></span>
+            <b>{{item.name}} </b><span><a href="/copy-course/?id={{item.id}}">скопировать</a></span>
+             <span><a href="/edit-course/?id={{item.id}}">редактировать</a></span>
         </li>
         {% endfor %}
+        <br>
+        <a href="/create-course/?id={{category.id}}">Создать новый курс</a>
     </div>
 {% endblock %}
+</div>

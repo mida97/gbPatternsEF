@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}
+Создание курса
+{% endblock %}
+{% block style %}
+	{% include "style.html" %}
+{% endblock %}
+{% block menu %}
+	{% include "menu.html" %}
+{% endblock %}
+{% block body %}
+<div id="site_content">
+    <div>
+        <a href="/courses-list/?id={{course.category}}">назад</a>
+    </div>
+
+    <br>
+    <br>
+
+    <div>
+        <h1>Редактирование курса</h1>
+        <form method="post">
+            <p><input type="text" name="name" placeholder="Название" value={{course.name}}></p>
+            <p><input type="text" name="type" placeholder="Тип" readonly="readonly" value={{course.type}}></p>
+            <p><textarea rows="8" cols="50" type="text" name="description" placeholder="Описание">{{course.description}}</textarea></p>
+
+        {% if course.type=='Он-лайн' %}
+            <p><input type="text" name="course_platform" placeholder="Платформа" value={{course.course_platform}}></p>
+        {% else %}
+            <p><input type="text" name="course_location" placeholder="Адрес" value={{course.course_location}}></p>
+        {% endif %}
+
+            <button type="submit">Сохранить и вернуться к списку курсов</button>
+        </form>
+    </div>
+{% endblock %}
+</div>

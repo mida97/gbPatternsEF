@@ -1,7 +1,7 @@
 from pathlib import PurePath
 import json
 
-class Data_Object:
+class DataForSave:
     def __init__(self, name, data):
         self.name = name
         self.data = data

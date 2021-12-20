@@ -7,7 +7,7 @@ from framework.requests import Get, Post
 
 def not_found_404_view(request):
 
-    return '404 WHAT', [b'404 PAGE Not Found']
+    return '404 WHAT', '404 PAGE Not Found'
 
 
 def decode_value(data):
@@ -59,7 +59,7 @@ class Application:
         # page controller
         code, body = view(request)
         start_response(code, [('Content-Type', 'text/html')])
-        return body
+        return [body.encode('utf-8')]
 
 application = Application(urls, fronts)
 
