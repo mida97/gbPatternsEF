@@ -62,13 +62,20 @@ class Category(Model):
     def __init__(self, attrs):
         super().__init__(attrs)
         self.courses = []
-        self.category = None
+        self.children = []
 
     def course_count(self):
         result = len(self.courses)
-        if self.category:
-            result += self.category.course_count()
+        if self.children:
+            for c in self.children:
+                result += c.course_count()
         return result
+
+    def update_fullname(self):
+        result = str(self.name)
+        if self.parent:
+            result = self.parent.fullname + '/' + result
+        self.fullname = result
 
 
 class User:

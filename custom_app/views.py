@@ -5,6 +5,11 @@ from engine_patterns.logger_singleton import Logger
 from engine_patterns.view_helper import TabSet, Tab
 from engine_patterns.model_service import ModelService
 
+from engine_patterns.structural_patterns import AppRoute, Debug
+
+#routes наполняется вызовами декоратора @AppRoute при импорте текущего файла
+routes = {}
+
 model_service = ModelService()
 logger = Logger('main')
 
@@ -18,17 +23,17 @@ tab_set = TabSet(tabs_desc)
 
 
 #временно не используется
-def index_view(request):
-
-    response = render('index.html',
+class Index_view:
+    def __call__(self, request):
+        response = render('index.html',
                       currenttab=tab_set.get_tab(0),
                       tabs=tab_set.get_tabs(),
                       objects_list=model_service.get_all('category'))
-    return '200 OK', response
-
+        return '200 OK', response
 
 
 # контроллер - список категорий
+@AppRoute(routes=routes, urls=['/category-list/', '/'])
 class CategoryList:
     def __call__(self, request):
         logger.log('Список категорий')
@@ -40,7 +45,9 @@ class CategoryList:
 
 
 # контроллер - список курсов
+@AppRoute(routes=routes, url='/courses-list/')
 class CoursesList:
+    @Debug(name='CoursesList')
     def __call__(self, request):
 
         try:
@@ -62,6 +69,7 @@ class CoursesList:
 
 
 # контроллер - создать курс
+@AppRoute(routes=routes, url='/create-course/')
 class CreateCourse:
     category_id = -1
 
@@ -93,7 +101,7 @@ class CreateCourse:
                                     objects_list=category.courses)
         else:
             try:
-                if not request['request_params']['id']:
+                if 'id' not in request['request_params']:
                     return '200 OK', render('error.html',
                                         currenttab=tab_set.get_tab(0),
                                         tabs=tab_set.get_tabs(),
@@ -115,7 +123,10 @@ class CreateCourse:
 
 
 # контроллер - создать категорию
+@AppRoute(routes=routes, url='/create-category/')
 class CreateCategory:
+    parent_id = -1
+
     def __call__(self, request):
 
         if request['method'] == 'POST':
@@ -126,26 +137,35 @@ class CreateCategory:
             name = data['name']
             name = model_service.decode_value(name)
 
-            category_id = data.get('category_id')
+            parent = None
+            if self.parent_id != -1:
+                parent = model_service.find_by_id('category', int(self.parent_id))
 
-            category = None
-            if category_id:
-                category = model_service.find_by_id('category', int(category_id))
-
-            attrs = {'name': name, 'category': category}
+            attrs = {'name': name,  'parent': parent}
             new_category = model_service.create('category', attrs)
+            if parent:
+                parent.children.append(new_category)
+            new_category.update_fullname()
 
             return '200 OK', render('category_list.html',
                                     currenttab=tab_set.get_tab(0),
                                     tabs=tab_set.get_tabs(),
                                     objects_list=model_service.get_all('category'))
         else:
+            parent = None
+            if 'id' in request['request_params']:
+                self.parent_id = int(request['request_params']['id'])
+                parent = model_service.find_by_id('category', int(self.parent_id))
+
             return '200 OK', render('create_category.html',
                                     currenttab=tab_set.get_tab(0),
                                     tabs=tab_set.get_tabs(),
-                                    objects_list=model_service.get_all('category'))
+                                    objects_list=model_service.get_all('category'),
+                                    parent=parent)
+
 
 # контроллер - редактировать курс
+@AppRoute(routes=routes, url='/edit-course/')
 class EditCourse:
     course_id = -1
 
@@ -199,6 +219,7 @@ class EditCourse:
 
 
 # контроллер - копировать курс
+@AppRoute(routes=routes, url='/copy-course/')
 class CopyCourse:
     def __call__(self, request):
         request_params = request['request_params']
@@ -223,16 +244,17 @@ class CopyCourse:
                                         error='Copy failed')
 
 
-
-def another_page(request):
-
-    response = render('another-page.html',
+@AppRoute(routes=routes, url='/timetable/')
+class timetable:
+    def __call__(self, request):
+        response = render('another-page.html',
                                 date=request.get('date', None),
                                 currenttab=tab_set.get_tab(1),
                                 tabs=tab_set.get_tabs())
-    return '200 OK', response
+        return '200 OK', response
 
 
+@AppRoute(routes=routes, url='/contactus/')
 class ContactUs:
 
     def __call__(self, request):

@@ -1,9 +1,9 @@
 from wsgiref.simple_server import make_server
-from framework.application import Application
+from framework.application import FakeApplication
 from custom_app.fronts import fronts
 from custom_app.views import routes
 
-application = Application(routes, fronts)
+application = FakeApplication(routes, fronts)
 
 if __name__ == '__main__':
     with make_server('', 8000, application) as httpd:
