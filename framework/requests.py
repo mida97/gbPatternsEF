@@ -19,6 +19,12 @@ class Get:
 class Post:
 
     @staticmethod
+    def get_request_params(env):
+        query_string = env['QUERY_STRING']
+        request_params = parse_url_param(query_string)
+        return request_params  # -> {'id': '1', 'category': '10'}
+
+    @staticmethod
     def parse_input_data(data: str):
         result = {}
         if data:

@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}
+Студенты
+{% endblock %}
+{% block style %}
+	{% include "style.html" %}
+{% endblock %}
+{% block menu %}
+	{% include "menu.html" %}
+{% endblock %}
+{% block body %}
+<div id="site_content">
+    <div class="content">
+        <h1>Список студентов</h1>
+        {% for item in objects_list %}
+        <li>
+            <b>{{item.name}} - {{item.email}} </b>
+             <span><a href="/add-student-course/?id={{item.id}}">Записать на курс</a></span>
+        </li>
+        {% endfor %}
+        <br>
+        <a href="/create-student/">Новый студент</a>
+    </div>
+{% endblock %}
+</div>

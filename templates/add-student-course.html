@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}
+Создание курса
+{% endblock %}
+{% block style %}
+	{% include "style.html" %}
+{% endblock %}
+{% block menu %}
+	{% include "menu.html" %}
+{% endblock %}
+{% block body %}
+<div id="site_content">
+    <div class="content">
+    <div>
+        <a href="/student-list/">назад</a>
+    </div>
+
+    <br>
+    <br>
+
+    <div>
+        <h1>Записать студента {{student.name}} на курс</h1>
+        <form method="post">
+            <p><select size="3" name="course_id">
+                {% for item in courses %}
+                <option value="{{item.id}}">{{item.name}}</option>
+                {% endfor %}
+            </select></p>
+            <button type="submit">Записать</button>
+        </form>
+    </div>
+    </div>
+ </div>
+{% endblock %}

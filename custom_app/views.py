@@ -1,3 +1,4 @@
+from engine_patterns.behavioral_patterns import ListView, FormView, BaseSerializer, EmailNotifier, SmsNotifier
 from framework.templator import render
 from framework.data_manager import DataForSave
 from engine_patterns.logger_singleton import Logger
@@ -12,60 +13,47 @@ routes = {}
 
 model_service = ModelService()
 logger = Logger('main')
+email_notifier = EmailNotifier()
+sms_notifier = SmsNotifier()
 
-tabs_desc = [
+tabs = [
     ['0', '/', 'Главная'],
-    ['1', '/another_page/', 'Расписание'],
-    ['2', '/contactus/', 'Обратная связь'],
+    ['1', '/timetable/', 'Расписание'],
+    ['2', '/student-list/', 'Студенты'],
+    ['3', '/contactus/', 'Обратная связь'],
 ]
 
-tab_set = TabSet(tabs_desc)
-
-
-#временно не используется
-class Index_view:
-    def __call__(self, request):
-        response = render('index.html',
-                      currenttab=tab_set.get_tab(0),
-                      tabs=tab_set.get_tabs(),
-                      objects_list=model_service.get_all('category'))
-        return '200 OK', response
+tab_set = TabSet(tabs)
 
 
 # контроллер - список категорий
 @AppRoute(routes=routes, urls=['/category-list/', '/'])
-class CategoryList:
-    def __call__(self, request):
-        logger.log('Список категорий')
-
-        return '200 OK', render('category_list.html',
-                                currenttab=tab_set.get_tab(0),
-                                tabs=tab_set.get_tabs(),
-                                objects_list=model_service.get_all('category'))
+class CategoryList(ListView):
+    template_name = 'category_list.html'
+    tabs_desc = tabs
+    tab_num = 0
+    queryset = model_service.get_all('category')
 
 
 # контроллер - список курсов
 @AppRoute(routes=routes, url='/courses-list/')
-class CoursesList:
-    @Debug(name='CoursesList')
-    def __call__(self, request):
-
+class CoursesList(ListView):
+    template_name = 'course_list.html'
+    tabs_desc = tabs
+    tab_num = 0
+    def get_context_data(self):
         try:
-            category = model_service.find_by_id('category', int(request['request_params']['id']))
-            objects_list = category.courses
+            category_id = int(super().get_request_params()['id'])
+            category = model_service.find_by_id('category', category_id)
+            self.queryset = category.courses
             logger.log('Список курсов для категории')
-            return '200 OK', render('course_list.html',
-                                    currenttab=tab_set.get_tab(0),
-                                    tabs=tab_set.get_tabs(),
-                                    category=category,
-                                    objects_list=objects_list)
+            context = super().get_context_data()
+            context['category'] = category
         except KeyError:
-            objects_list = model_service.get_all('course')
+            self.queryset = model_service.get_all('course')
             logger.log('Список всех курсов')
-        return '200 OK', render('course_list.html',
-                                currenttab=tab_set.get_tab(0),
-                                tabs=tab_set.get_tabs(),
-                                objects_list=objects_list)
+            context = super().get_context_data()
+        return context
 
 
 # контроллер - создать курс
@@ -92,7 +80,8 @@ class CreateCourse:
                          'category': category.id}
                 new_course = model_service.create('course', attrs)
                 category.courses.append(new_course)
-
+                new_course.observers.append(email_notifier)
+                new_course.observers.append(sms_notifier)
 
             return '200 OK', render('course_list.html',
                                     currenttab=tab_set.get_tab(0),
@@ -127,6 +116,7 @@ class CreateCourse:
 class CreateCategory:
     parent_id = -1
 
+    @Debug(name='CreateCategory')
     def __call__(self, request):
 
         if request['method'] == 'POST':
@@ -227,7 +217,8 @@ class CopyCourse:
         try:
             id = request_params['id']
             new_course = model_service.create_by_copy(type='course', id=id)
-
+            new_course.observers.append(email_notifier)
+            new_course.observers.append(sms_notifier)
             category_id = new_course.category
             category = model_service.find_by_id('category', int(category_id))
             category.courses.append(new_course)
@@ -245,7 +236,7 @@ class CopyCourse:
 
 
 @AppRoute(routes=routes, url='/timetable/')
-class timetable:
+class Timetable:
     def __call__(self, request):
         response = render('another-page.html',
                                 date=request.get('date', None),
@@ -258,20 +249,75 @@ class timetable:
 class ContactUs:
 
     def __call__(self, request):
-
+        success = False
         if request['method'] == 'POST':
             message_data = request['data']
             del message_data['contact_submitted']
             new_message = DataForSave("MESSAGE", message_data)
             new_message.save(file_name='message.json')
-            return '200 OK', render('contact.html',
-                                        success=True,
-                                        currenttab=tab_set.get_tab(2),
-                                        tabs=tab_set.get_tabs())
+            success = True,
 
-        else:
+        return '200 OK', render('contact.html',
+                                    success=success,
+                                    currenttab=tab_set.get_tab(3),
+                                    tabs=tab_set.get_tabs())
 
-            return '200 OK', render('contact.html',
-                                        success=False,
-                                        currenttab=tab_set.get_tab(2),
-                                        tabs=tab_set.get_tabs())
+
+@AppRoute(routes=routes, url='/student-list/')
+class StudentListView(ListView):
+    tabs_desc = tabs
+    tab_num = 2
+    template_name = 'student_list.html'
+
+    def get_context_data(self,):
+        self.queryset = model_service.get_all("student")
+        return super().get_context_data()
+
+
+@AppRoute(routes=routes, url='/create-student/')
+class StudentCreateView(FormView):
+    tabs_desc = tabs
+    tab_num = 2
+    template_name = 'create_student.html'
+
+    def save_data(self, data: dict):
+        name = model_service.decode_value(data['name'])
+        email = model_service.decode_value(data['email'])
+        attrs = {'name': name, 'email': email}
+        model_service.create('student', attrs)
+
+
+@AppRoute(routes=routes, url='/add-student-course/')
+class AddStudentByCourseCreateView(FormView):
+    tabs_desc = tabs
+    tab_num = 2
+    template_name = 'add-student-course.html'
+    error = None
+
+    def get_context_data(self, ):
+        context = super().get_context_data()
+        student_id = super().get_request_params()['id']
+        try:
+            context['courses'] = model_service.get_all("course")
+        except Exception:
+            pass
+        context['student'] = model_service.find_by_id("student", student_id)
+        return context
+
+    def save_data(self, data: dict):
+        try:
+            course_id = data['course_id']
+            course = model_service.find_by_id("course", course_id)
+
+            student_id = super().get_request_params()['id']
+            student = model_service.find_by_id("student", student_id)
+            course.add_student(student)
+        except KeyError:
+            self.error = 'Ошибка сохранения'
+
+
+@AppRoute(routes=routes, url='/api/')
+class CourseApi:
+    @Debug(name='CourseApi')
+    def __call__(self, request):
+        return '200 OK', BaseSerializer(model_service.get_all("course")).save()

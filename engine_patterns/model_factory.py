@@ -1,4 +1,6 @@
 from copy import deepcopy
+
+from engine_patterns.behavioral_patterns import Subject
 from engine_patterns.logger_singleton import Logger
 
 
@@ -24,6 +26,8 @@ class Model(Prototype):
             setattr(self, k, v)
         logger.log(f'create new record {self.id}')
 
+    def get_attr(self, attrname):
+        return object.__getattribute__(self, attrname)
 
     def edit(self, attrs):
         for k, v in dict(attrs).items():
@@ -36,9 +40,8 @@ class Model(Prototype):
         return new
 
 
-
-#курс
-class Course(Model):
+#курс Subject реализует паттерн наблюдатель
+class Course(Model, Subject):
     auto_id = -1
 
     @staticmethod
@@ -48,6 +51,20 @@ class Course(Model):
 
     def __init__(self, attrs):
         super().__init__(attrs)
+        self.observers = []
+        self.students = []
+
+    def __getitem__(self, item):
+        return self.students[item]
+
+    def add_student(self, student):
+        self.students.append(student)
+        student.courses.append(self)
+        self.notify(f'Новый студент {student.name} на курсе {self.name}')
+
+    def edit(self, attrs):
+        super().edit(attrs)
+        self.notify(f'Курс {self.name} изменен')
 
 
 # категория
@@ -78,7 +95,7 @@ class Category(Model):
         self.fullname = result
 
 
-class User:
+class User(Model):
     auto_id = -1
 
     @staticmethod
@@ -90,12 +107,19 @@ class User:
         super().__init__(attrs)
 
 
+class Student(User):
+    def __init__(self, attrs):
+        super().__init__(attrs)
+        self.courses = []
+        self.role = 'student'
+
+
 class ModelFactory:
 
     types = {
         'course': Course,
         'category': Category,
-        'user': User,
+        'student': Student,
     }
 
     # порождающий паттерн Фабричный метод

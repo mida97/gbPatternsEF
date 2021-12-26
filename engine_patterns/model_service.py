@@ -4,6 +4,16 @@ from engine_patterns.logger_singleton import Logger
 
 logger = Logger('model_service')
 
+
+def parse_filter(params: str):
+    result = {}
+    if params:
+        params = params.split('&')
+        for i in params:
+            k, v = i.split('=')
+            result[k] = v
+    return result
+
 # интерфейс получения данных и создания объектов
 class ModelService:
     def __init__(self):
@@ -11,6 +21,7 @@ class ModelService:
         'course': [],
         'category': [],
         'user': [],
+        'student': [],
         }
 
     def create(self, type, attrs):
@@ -55,6 +66,16 @@ class ModelService:
             raise Exception(f'Объекта {type} не существет')
         return self.objects[type]
 
+    #filter запрос формата role=student&status=active
+    def get_filtered(self, type, filter: str):
+        filter_dict = parse_filter(filter)
+        obj_list = list(self.get_all(type))
+        for attr, v in filter_dict.items():
+            for obj in obj_list:
+                if obj.get_attr(attr) != v:
+                    obj_list.remove(obj)
+
+        return obj_list
 
     @staticmethod
     def decode_value(val):

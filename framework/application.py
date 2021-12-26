@@ -41,6 +41,8 @@ class Application:
             print(f'GET-запрос параметры url строки:{request_params}')
 
         if method == 'POST':
+            request_params = Post().get_request_params(environ)
+            request['request_params'] = request_params
             data = decode_value(Post().get_input_data(environ))
             request['data'] = data
             print(f'POST-запрос, данные из тела запроса:{data}')
